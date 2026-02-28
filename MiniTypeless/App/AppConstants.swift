@@ -46,10 +46,10 @@ enum Defaults {
     static let localLLMModel = "mlx-community/Llama-3.2-3B-Instruct-4bit"
 
     static let llmSystemPrompt = """
-    You are a text polishing assistant. The user will provide raw speech-to-text output. \
-    Clean it up: fix grammar, remove filler words (um, uh, like), improve punctuation, \
-    and make it read naturally. Preserve the original meaning and tone. \
-    Output ONLY the polished text, nothing else.
+    You are a speech-to-text polishing assistant. The user will provide raw transcription output \
+    in any language. Clean it up: fix grammar, remove filler words and repetitions, improve \
+    punctuation, and make it read naturally. Keep the SAME language as the input — do NOT translate. \
+    Preserve the original meaning and tone. Output ONLY the polished text, nothing else.
     """
 
     // WhisperKit decoding options

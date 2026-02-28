@@ -10,6 +10,14 @@ final class CodexLLM: LLMProvider, @unchecked Sendable {
     private let cliPath: String
     private let model: String
 
+    // Warm process state (pre-launched during transcription)
+    private var warmProcess: Process?
+    private var warmStdinHandle: FileHandle?
+    private var warmStdout: Pipe?
+    private var warmStderr: Pipe?
+    private var warmOutputFile: URL?
+    private var warmSystemPrompt: String?
+
     init(cliPath: String, model: String = Defaults.codexModel) {
         self.cliPath = cliPath
         self.model = model
@@ -30,6 +38,77 @@ final class CodexLLM: LLMProvider, @unchecked Sendable {
         }
     }
 
+    // MARK: - Pre-launch (warm up)
+
+    /// Pre-launch the CLI process with `-` stdin marker, leaving stdin open for the prompt.
+    /// Call this during transcription to overlap CLI startup with STT work.
+    func warmUp(systemPrompt: String) {
+        guard !cliPath.isEmpty, FileManager.default.isExecutableFile(atPath: cliPath) else {
+            logger.warning("warmUp: CLI not found at '\(self.cliPath)', skipping")
+            return
+        }
+
+        let outputFile = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mini-typeless-codex-\(UUID().uuidString).txt")
+
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: cliPath)
+        // `-` at end tells codex to read prompt from stdin
+        proc.arguments = [
+            "exec",
+            "-m", model,
+            "--skip-git-repo-check",
+            "--full-auto",
+            "--ephemeral",
+            "-o", outputFile.path,
+            "-",
+        ]
+
+        let stdinPipe = Pipe()
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        proc.standardInput = stdinPipe
+        proc.standardOutput = stdoutPipe
+        proc.standardError = stderrPipe
+
+        do {
+            try proc.run()
+            warmProcess = proc
+            warmStdinHandle = stdinPipe.fileHandleForWriting
+            warmStdout = stdoutPipe
+            warmStderr = stderrPipe
+            warmOutputFile = outputFile
+            warmSystemPrompt = systemPrompt
+            logger.info("warmUp: pre-launched Codex CLI (pid=\(proc.processIdentifier))")
+        } catch {
+            logger.warning("warmUp: failed to launch: \(error.localizedDescription)")
+        }
+    }
+
+    /// Terminate any pre-launched process.
+    func cancelWarm() {
+        guard let proc = warmProcess else { return }
+        if proc.isRunning {
+            proc.terminate()
+            logger.info("cancelWarm: terminated pre-launched Codex CLI")
+        }
+        if let outputFile = warmOutputFile {
+            try? FileManager.default.removeItem(at: outputFile)
+        }
+        clearWarmState()
+    }
+
+    private func clearWarmState() {
+        warmProcess = nil
+        warmStdinHandle = nil
+        warmStdout = nil
+        warmStderr = nil
+        warmOutputFile = nil
+        warmSystemPrompt = nil
+    }
+
+    // MARK: - Process
+
     func process(messages: [LLMMessage]) async throws -> LLMResult {
         try await prepare()
 
@@ -40,6 +119,69 @@ final class CodexLLM: LLMProvider, @unchecked Sendable {
             throw CLILLMError.emptyInput
         }
 
+        // Check for warm (pre-launched) process
+        if let proc = warmProcess, proc.isRunning,
+           let stdinHandle = warmStdinHandle,
+           let stdout = warmStdout,
+           let stderr = warmStderr,
+           let outputFile = warmOutputFile {
+            // Use the stored system prompt from warmUp, or the one from messages
+            let sysPrompt = warmSystemPrompt ?? systemPrompt
+            logger.info("process: using pre-launched warm process")
+            let warmProc = proc
+            let warmOutFile = outputFile
+            clearWarmState()
+
+            let fullPrompt: String
+            if sysPrompt.isEmpty {
+                fullPrompt = userText
+            } else {
+                fullPrompt = sysPrompt + "\n\n" + userText
+            }
+
+            return try await Task.detached {
+                // Write full prompt to stdin and close it
+                stdinHandle.write(fullPrompt.data(using: .utf8)!)
+                try stdinHandle.close()
+
+                // Read pipes to prevent buffer deadlock
+                let _ = stdout.fileHandleForReading.readDataToEndOfFile()
+                let errData = stderr.fileHandleForReading.readDataToEndOfFile()
+                warmProc.waitUntilExit()
+
+                let errorOutput = String(data: errData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+                if warmProc.terminationStatus != 0 {
+                    logger.error("Codex CLI (warm) exited with \(warmProc.terminationStatus): \(errorOutput)")
+                    try? FileManager.default.removeItem(at: warmOutFile)
+                    let errorMessage = CodexLLM.extractErrorMessage(from: errorOutput)
+                    throw CLILLMError.cliError(exitCode: Int(warmProc.terminationStatus), message: errorMessage)
+                }
+
+                // Read the output file written by -o flag
+                let output: String
+                do {
+                    output = try String(contentsOf: warmOutFile, encoding: .utf8)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    try? FileManager.default.removeItem(at: warmOutFile)
+                } catch {
+                    try? FileManager.default.removeItem(at: warmOutFile)
+                    logger.error("Failed to read Codex output file: \(error.localizedDescription)")
+                    throw CLILLMError.invalidOutput
+                }
+
+                guard !output.isEmpty else {
+                    logger.error("Codex CLI (warm) returned empty output")
+                    throw CLILLMError.invalidOutput
+                }
+
+                logger.info("Codex CLI (warm) output (\(output.count) chars): \(output.prefix(200))...")
+                return LLMResult(text: output, inputTokens: nil, outputTokens: nil)
+            }.value
+        }
+
+        // Cold path: launch a fresh process with prompt as argument
+        logger.info("process: cold launch (no warm process)")
         let cliPath = self.cliPath
         let model = self.model
 
@@ -50,7 +192,6 @@ final class CodexLLM: LLMProvider, @unchecked Sendable {
             fullPrompt = systemPrompt + "\n\n" + userText
         }
 
-        // Use a temp file for output since codex exec outputs agent activity to stdout
         let outputFile = FileManager.default.temporaryDirectory
             .appendingPathComponent("mini-typeless-codex-\(UUID().uuidString).txt")
 
@@ -93,7 +234,6 @@ final class CodexLLM: LLMProvider, @unchecked Sendable {
             if proc.terminationStatus != 0 {
                 logger.error("Codex CLI exited with \(proc.terminationStatus): \(errorOutput)")
                 try? FileManager.default.removeItem(at: outputFile)
-                // Extract just the ERROR line from verbose codex output
                 let errorMessage = CodexLLM.extractErrorMessage(from: errorOutput)
                 throw CLILLMError.cliError(exitCode: Int(proc.terminationStatus), message: errorMessage)
             }

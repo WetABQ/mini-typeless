@@ -9,6 +9,7 @@ final class DictationPipeline {
     private let appState: AppState
     private let recorder = AudioRecorder()
     private var pipelineTask: Task<Void, Never>?
+    private var preLaunchedLLM: (any LLMProvider)?
 
     init(appState: AppState) {
         self.appState = appState
@@ -84,6 +85,9 @@ final class DictationPipeline {
         pipelineTask?.cancel()
         pipelineTask = nil
 
+        // Terminate any pre-launched CLI process
+        cancelPreLaunchedLLM()
+
         // Stop recording if still recording
         if recorder.recording {
             recorder.audioLevelCallback = nil
@@ -94,6 +98,15 @@ final class DictationPipeline {
         appState.audioLevelHistory = Array(repeating: 0, count: 12)
         logger.info("Pipeline cancelled by user")
         appState.dictationState = .idle
+    }
+
+    private func cancelPreLaunchedLLM() {
+        if let claude = preLaunchedLLM as? ClaudeCodeLLM {
+            claude.cancelWarm()
+        } else if let codex = preLaunchedLLM as? CodexLLM {
+            codex.cancelWarm()
+        }
+        preLaunchedLLM = nil
     }
 
     // MARK: - Pipeline execution
@@ -130,6 +143,20 @@ final class DictationPipeline {
 
             try Task.checkCancellation()
 
+            // Pre-launch CLI LLM process during transcription to overlap startup
+            if appState.llmEnabled {
+                let llm = createLLMProvider()
+                let systemPrompt = appState.llmSystemPrompt
+                if let claude = llm as? ClaudeCodeLLM {
+                    claude.warmUp(systemPrompt: systemPrompt)
+                    logger.info("runPipeline: pre-launched Claude CLI during transcription")
+                } else if let codex = llm as? CodexLLM {
+                    codex.warmUp(systemPrompt: systemPrompt)
+                    logger.info("runPipeline: pre-launched Codex CLI during transcription")
+                }
+                preLaunchedLLM = llm
+            }
+
             appState.dictationState = .transcribing
             logger.info("runPipeline: starting transcription...")
             let result = try await stt.transcribe(audioSamples: samples)
@@ -138,6 +165,7 @@ final class DictationPipeline {
 
             guard !rawText.isEmpty else {
                 logger.info("Empty transcription result")
+                cancelPreLaunchedLLM()
                 appState.dictationState = .error("No speech detected")
                 resetAfterDelay()
                 return
@@ -148,12 +176,13 @@ final class DictationPipeline {
             appState.lastTranscription = rawText
             logger.info("Transcription: \(rawText)")
 
-            // LLM polish (optional)
+            // LLM polish (optional) — uses pre-launched provider if available
             var finalText = rawText
             if appState.llmEnabled {
                 appState.dictationState = .processing
                 try Task.checkCancellation()
-                finalText = try await polishWithLLM(rawText)
+                finalText = try await polishWithLLM(rawText, provider: preLaunchedLLM)
+                preLaunchedLLM = nil
             }
 
             try Task.checkCancellation()
@@ -177,8 +206,10 @@ final class DictationPipeline {
             logger.info("Dictation complete")
         } catch is CancellationError {
             logger.info("Pipeline task cancelled")
+            cancelPreLaunchedLLM()
             // State already reset by cancelPipeline()
         } catch {
+            cancelPreLaunchedLLM()
             logger.error("Dictation failed: \(error.localizedDescription)")
             // Save error to history for debugging
             appState.addHistoryRecord(
@@ -246,8 +277,8 @@ final class DictationPipeline {
 
     // MARK: - LLM Processing
 
-    private func polishWithLLM(_ text: String) async throws -> String {
-        let llm = createLLMProvider()
+    private func polishWithLLM(_ text: String, provider: (any LLMProvider)? = nil) async throws -> String {
+        let llm = provider ?? createLLMProvider()
         if !(await llm.isReady) {
             try await llm.prepare()
         }
