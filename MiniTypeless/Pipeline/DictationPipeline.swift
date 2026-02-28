@@ -4,21 +4,75 @@ import os
 private let logger = Logger(subsystem: "com.wetabq.MiniTypeless", category: "DictationPipeline")
 
 /// Orchestrates the full dictation flow: record → transcribe → LLM polish → inject.
+///
+/// For local STT providers (WhisperKit, SenseVoice), uses streaming mode:
+/// audio is chunked via VAD during recording and transcribed in parallel.
+/// For API providers, uses the original batch mode.
 @MainActor
 final class DictationPipeline {
     private let appState: AppState
     private let recorder = AudioRecorder()
+    private lazy var streamingPipeline = StreamingPipeline(appState: appState)
     private var pipelineTask: Task<Void, Never>?
     private var preLaunchedLLM: (any LLMProvider)?
+    private var useStreamingMode = false
 
     init(appState: AppState) {
         self.appState = appState
     }
 
-    /// Pre-warm the audio subsystem to avoid first-recording latency.
-    func warmUpAudio() {
+    /// Pre-warm everything at app launch to minimize first-recording latency:
+    /// 1. AudioRecorder subsystem (for batch mode)
+    /// 2. AudioStreamEngine / CoreAudio HAL (for streaming mode)
+    /// 3. STT model (load into memory in background)
+    func warmUp() {
         Task.detached {
             self.recorder.warmUp()
+        }
+
+        // Pre-warm AudioStreamEngine: briefly create and start an engine
+        // to initialize CoreAudio HAL, then tear it down.
+        Task.detached {
+            let engine = AudioStreamEngine()
+            do {
+                try engine.startCapture()
+                // Let it run briefly to fully initialize HAL I/O
+                try? await Task.sleep(for: .milliseconds(200))
+                engine.stopCapture()
+                logger.info("AudioStreamEngine pre-warmed")
+            } catch {
+                logger.warning("AudioStreamEngine warmup failed (non-fatal): \(error.localizedDescription)")
+            }
+        }
+
+        // Pre-load STT model in background so first dictation starts instantly
+        Task {
+            await preloadSTTModel()
+        }
+    }
+
+    /// Load the currently selected STT model into memory.
+    /// Called at app launch and can be called again when the user changes provider/model.
+    private func preloadSTTModel() async {
+        let provider = appState.sttProviderType
+        guard provider.isLocal else { return }
+
+        logger.info("Preloading STT model: \(provider.rawValue)")
+        do {
+            let stt = createSTTProvider()
+            if !(await stt.isReady) {
+                try await stt.prepare()
+                if provider == .whisperKit {
+                    appState.cachedWhisperModel = appState.whisperModel
+                } else if provider == .senseVoice {
+                    appState.cachedSenseVoiceModel = appState.senseVoiceModel
+                }
+                logger.info("STT model preloaded: \(provider.rawValue)")
+            } else {
+                logger.info("STT model already cached: \(provider.rawValue)")
+            }
+        } catch {
+            logger.warning("STT preload failed (non-fatal): \(error.localizedDescription)")
         }
     }
 
@@ -30,24 +84,53 @@ final class DictationPipeline {
             return
         }
 
-        do {
-            appState.dictationState = .recording
-            appState.recordingStartTime = Date()
+        let provider = appState.sttProviderType
+        useStreamingMode = provider.isLocal
 
-            // Wire audio level metering
-            let state = appState
-            recorder.audioLevelCallback = { level in
-                Task { @MainActor in
-                    state.audioLevel = level
-                    state.audioLevelHistory.append(level)
-                    if state.audioLevelHistory.count > 12 {
-                        state.audioLevelHistory.removeFirst()
+        do {
+            if useStreamingMode {
+                // Streaming mode: prepare STT first, then start streaming capture
+                appState.dictationState = .loadingModel
+                let stt = createSTTProvider()
+                if !(await stt.isReady) {
+                    try await stt.prepare()
+                    if provider == .whisperKit {
+                        appState.cachedWhisperModel = appState.whisperModel
+                    } else if provider == .senseVoice {
+                        appState.cachedSenseVoiceModel = appState.senseVoiceModel
                     }
                 }
+
+                appState.dictationState = .recording
+                appState.recordingStartTime = Date()
+
+                // Pre-launch CLI LLM during recording for overlap
+                if appState.llmEnabled {
+                    preLaunchLLM()
+                }
+
+                try streamingPipeline.startStreaming(sttProvider: stt)
+            } else {
+                // Batch mode: record first, process later
+                appState.dictationState = .recording
+                appState.recordingStartTime = Date()
+
+                // Wire audio level metering
+                let state = appState
+                recorder.audioLevelCallback = { level in
+                    Task { @MainActor in
+                        state.audioLevel = level
+                        state.audioLevelHistory.append(level)
+                        if state.audioLevelHistory.count > 12 {
+                            state.audioLevelHistory.removeFirst()
+                        }
+                    }
+                }
+
+                try recorder.startRecording()
             }
 
-            try recorder.startRecording()
-            logger.info("Dictation started")
+            logger.info("Dictation started (streaming=\(self.useStreamingMode))")
         } catch {
             logger.error("Failed to start recording: \(error.localizedDescription)")
             appState.dictationState = .error(error.localizedDescription)
@@ -61,22 +144,30 @@ final class DictationPipeline {
             return
         }
 
-        recorder.audioLevelCallback = nil
-        let samples = recorder.stopRecording()
-        appState.audioLevel = 0
-        appState.audioLevelHistory = Array(repeating: 0, count: 12)
-        logger.info("stopDictation: got \(samples.count) samples from recorder")
+        if useStreamingMode {
+            // Streaming mode: stop capture, await chunk STTs, then polish + inject
+            pipelineTask = Task {
+                await runStreamingPostProcess()
+            }
+        } else {
+            // Batch mode: stop recorder, get samples, run full pipeline
+            recorder.audioLevelCallback = nil
+            let samples = recorder.stopRecording()
+            appState.audioLevel = 0
+            appState.audioLevelHistory = Array(repeating: 0, count: 12)
+            logger.info("stopDictation: got \(samples.count) samples from recorder")
 
-        guard samples.count > 1600 else { // < 0.1s of audio at 16kHz
-            logger.warning("Recording too short: \(samples.count) samples (need > 1600)")
-            appState.dictationState = .error("Recording too short (\(samples.count) samples)")
-            resetAfterDelay()
-            return
-        }
+            guard samples.count > 1600 else { // < 0.1s of audio at 16kHz
+                logger.warning("Recording too short: \(samples.count) samples (need > 1600)")
+                appState.dictationState = .error("Recording too short (\(samples.count) samples)")
+                resetAfterDelay()
+                return
+            }
 
-        // Run the pipeline in a cancellable task
-        pipelineTask = Task {
-            await runPipeline(samples: samples)
+            // Run the pipeline in a cancellable task
+            pipelineTask = Task {
+                await runPipeline(samples: samples)
+            }
         }
     }
 
@@ -88,14 +179,18 @@ final class DictationPipeline {
         // Terminate any pre-launched CLI process
         cancelPreLaunchedLLM()
 
-        // Stop recording if still recording
-        if recorder.recording {
+        // Stop recording
+        if useStreamingMode {
+            streamingPipeline.cancel()
+        } else if recorder.recording {
             recorder.audioLevelCallback = nil
             _ = recorder.stopRecording()
         }
 
         appState.audioLevel = 0
         appState.audioLevelHistory = Array(repeating: 0, count: 12)
+        appState.streamingTranscription = ""
+        appState.streamingChunkCount = 0
         logger.info("Pipeline cancelled by user")
         appState.dictationState = .idle
     }
@@ -109,7 +204,87 @@ final class DictationPipeline {
         preLaunchedLLM = nil
     }
 
-    // MARK: - Pipeline execution
+    private func preLaunchLLM() {
+        let llm = createLLMProvider()
+        let systemPrompt = appState.llmSystemPrompt
+        if let claude = llm as? ClaudeCodeLLM {
+            claude.warmUp(systemPrompt: systemPrompt)
+            logger.info("Pre-launched Claude CLI during streaming")
+        } else if let codex = llm as? CodexLLM {
+            codex.warmUp(systemPrompt: systemPrompt)
+            logger.info("Pre-launched Codex CLI during streaming")
+        }
+        preLaunchedLLM = llm
+    }
+
+    // MARK: - Streaming post-processing
+
+    /// Called after streaming recording stops. Awaits all chunks,
+    /// polishes, and injects.
+    private func runStreamingPostProcess() async {
+        do {
+            appState.dictationState = .transcribing
+            let result = await streamingPipeline.stopStreaming()
+
+            try Task.checkCancellation()
+
+            let rawText = result.text
+            logger.info("Streaming result: \(result.chunkCount) chunks, text='\(rawText.prefix(200))'")
+
+            guard !rawText.isEmpty else {
+                logger.info("Empty streaming transcription")
+                cancelPreLaunchedLLM()
+                appState.dictationState = .error("No speech detected")
+                resetAfterDelay()
+                return
+            }
+
+            appState.lastTranscription = rawText
+
+            // LLM polish (optional)
+            var finalText = rawText
+            if appState.llmEnabled {
+                appState.dictationState = .processing
+                try Task.checkCancellation()
+                finalText = try await polishWithLLM(rawText, provider: preLaunchedLLM)
+                preLaunchedLLM = nil
+            }
+
+            try Task.checkCancellation()
+
+            appState.lastProcessedText = finalText
+            appState.streamingTranscription = ""
+            appState.streamingChunkCount = 0
+
+            // Save to history
+            appState.addHistoryRecord(
+                rawText: rawText,
+                processedText: finalText != rawText ? finalText : nil,
+                sttProvider: appState.sttProviderType.rawValue,
+                llmProvider: appState.llmEnabled ? appState.llmProviderType.rawValue : nil,
+                audioSamples: result.allSamples
+            )
+
+            // Inject
+            appState.dictationState = .injecting
+            await TextInjector.inject(finalText, mode: appState.injectionMode)
+
+            appState.dictationState = .idle
+            logger.info("Streaming dictation complete")
+        } catch is CancellationError {
+            logger.info("Streaming pipeline cancelled")
+            cancelPreLaunchedLLM()
+        } catch {
+            cancelPreLaunchedLLM()
+            logger.error("Streaming dictation failed: \(error.localizedDescription)")
+            appState.dictationState = .error(error.localizedDescription)
+            resetAfterDelay()
+        }
+
+        pipelineTask = nil
+    }
+
+    // MARK: - Batch pipeline execution
 
     private func runPipeline(samples: [Float]) async {
         let provider = appState.sttProviderType
@@ -120,18 +295,22 @@ final class DictationPipeline {
 
             let stt = createSTTProvider()
 
-            // Only show "Loading model" for local model providers (WhisperKit).
+            // Only show "Loading model" for local model providers (WhisperKit, SenseVoice).
             // API providers (OpenAI) and Apple Speech don't load a model.
-            if provider == .whisperKit {
+            if provider.isLocal {
                 appState.dictationState = .loadingModel
-                logger.info("runPipeline: checking WhisperKit isReady...")
+                logger.info("runPipeline: checking \(provider.rawValue) isReady...")
                 if !(await stt.isReady) {
-                    logger.info("runPipeline: WhisperKit not ready, calling prepare()...")
+                    logger.info("runPipeline: \(provider.rawValue) not ready, calling prepare()...")
                     try await stt.prepare()
-                    appState.cachedWhisperModel = appState.whisperModel
-                    logger.info("runPipeline: WhisperKit prepare() completed")
+                    if provider == .whisperKit {
+                        appState.cachedWhisperModel = appState.whisperModel
+                    } else if provider == .senseVoice {
+                        appState.cachedSenseVoiceModel = appState.senseVoiceModel
+                    }
+                    logger.info("runPipeline: \(provider.rawValue) prepare() completed")
                 } else {
-                    logger.info("runPipeline: WhisperKit already ready (cached)")
+                    logger.info("runPipeline: \(provider.rawValue) already ready (cached)")
                 }
             } else {
                 // For API/Apple Speech, prepare if needed (permission request, etc.)
@@ -243,6 +422,8 @@ final class DictationPipeline {
             )
         case .appleSpeech:
             AppleSpeechSTT(language: appState.sttLanguage)
+        case .senseVoice:
+            SenseVoiceSTT(modelName: appState.senseVoiceModel, language: String(appState.sttLanguage.prefix(2)))
         case .openAIWhisper:
             OpenAIWhisperSTT(apiKey: appState.openAIAPIKey, baseURL: appState.openAIBaseURL, language: String(appState.sttLanguage.prefix(2)))
         }
@@ -278,7 +459,11 @@ final class DictationPipeline {
     // MARK: - LLM Processing
 
     private func polishWithLLM(_ text: String, provider: (any LLMProvider)? = nil) async throws -> String {
+        let startTime = Date()
         let llm = provider ?? createLLMProvider()
+        let isPreLaunched = provider != nil
+        logger.info("LLM polish starting (provider=\(llm.displayName), preLaunched=\(isPreLaunched), textLen=\(text.count))")
+
         if !(await llm.isReady) {
             try await llm.prepare()
         }
@@ -289,7 +474,8 @@ final class DictationPipeline {
         ]
 
         let result = try await llm.process(messages: messages)
-        logger.info("LLM polished: \(result.text.prefix(100))...")
+        let elapsed = Date().timeIntervalSince(startTime)
+        logger.info("LLM polished in \(String(format: "%.1f", elapsed))s (\(llm.displayName)): \(result.text.prefix(100))...")
         return result.text
     }
 

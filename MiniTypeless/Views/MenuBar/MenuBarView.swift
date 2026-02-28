@@ -106,7 +106,7 @@ private func pipelineSteps(sttProvider: STTProviderType, llmEnabled: Bool) -> [P
 
     // Step 1: Provider-specific middle step
     switch sttProvider {
-    case .whisperKit:
+    case .whisperKit, .senseVoice:
         // Local model needs loading
         steps.append(PipelineStep(id: idx, icon: "arrow.down.circle", label: "Load"))
         idx += 1
@@ -148,14 +148,14 @@ private func activeStepIndex(state: DictationState, sttProvider: STTProviderType
         // Only WhisperKit has a "Load" step at index 1.
         // For others, this state shouldn't happen, but map to transcribing step.
         switch sttProvider {
-        case .whisperKit: return 1
+        case .whisperKit, .senseVoice: return 1
         case .openAIWhisper: return 1 // "Upload" step
         case .appleSpeech: return 1   // Transcribe step (no load)
         }
 
     case .transcribing:
         switch sttProvider {
-        case .whisperKit: return 2
+        case .whisperKit, .senseVoice: return 2
         case .openAIWhisper: return 2
         case .appleSpeech: return 1 // No load step, so transcribe is at 1
         }
@@ -163,7 +163,7 @@ private func activeStepIndex(state: DictationState, sttProvider: STTProviderType
     case .processing:
         let base: Int
         switch sttProvider {
-        case .whisperKit, .openAIWhisper: base = 3
+        case .whisperKit, .senseVoice, .openAIWhisper: base = 3
         case .appleSpeech: base = 2
         }
         return llmEnabled ? base : nil
@@ -171,7 +171,7 @@ private func activeStepIndex(state: DictationState, sttProvider: STTProviderType
     case .injecting:
         let base: Int
         switch sttProvider {
-        case .whisperKit, .openAIWhisper: base = llmEnabled ? 4 : 3
+        case .whisperKit, .senseVoice, .openAIWhisper: base = llmEnabled ? 4 : 3
         case .appleSpeech: base = llmEnabled ? 3 : 2
         }
         return base

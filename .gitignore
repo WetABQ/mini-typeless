@@ -19,6 +19,9 @@ Package.resolved
 # Claude Code
 .claude/
 
+# sherpa-onnx intermediate build artifacts
+sherpa-onnx-libs/converted/
+
 # Misc
 *.swp
 *~

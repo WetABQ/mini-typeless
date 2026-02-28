@@ -92,13 +92,25 @@ struct RecordingOverlayContent: View {
     // MARK: - Recording View (audio bars + buttons)
 
     private var recordingView: some View {
-        HStack(spacing: 12) {
-            overlayButton(icon: "xmark", action: onCancel)
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                overlayButton(icon: "xmark", action: onCancel)
 
-            AudioLevelBarsView(levels: appState.audioLevelHistory)
-                .frame(height: 28)
+                AudioLevelBarsView(levels: appState.audioLevelHistory)
+                    .frame(height: 28)
 
-            overlayButton(icon: "checkmark", action: onConfirm)
+                overlayButton(icon: "checkmark", action: onConfirm)
+            }
+
+            // Show live streaming transcription if available
+            if !appState.streamingTranscription.isEmpty {
+                Text(appState.streamingTranscription)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .lineLimit(2)
+                    .truncationMode(.head)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 

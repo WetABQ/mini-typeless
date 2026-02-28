@@ -3,12 +3,20 @@ import SwiftUI
 struct STTSettingsView: View {
     @Environment(AppState.self) private var appState
     @State private var modelManager = ModelManager()
+    @State private var senseVoiceModelManager = SenseVoiceModelManager()
     @State private var isPreloading = false
     @State private var preloadError: String?
 
-    /// Whether the currently selected whisper model is loaded in memory.
+    /// Whether the currently selected model is loaded in memory.
     private var isModelCached: Bool {
-        appState.cachedWhisperModel == appState.whisperModel
+        switch appState.sttProviderType {
+        case .whisperKit:
+            return appState.cachedWhisperModel == appState.whisperModel
+        case .senseVoice:
+            return appState.cachedSenseVoiceModel == appState.senseVoiceModel
+        default:
+            return false
+        }
     }
 
     var body: some View {
@@ -34,6 +42,8 @@ struct STTSettingsView: View {
             switch state.sttProviderType {
             case .whisperKit:
                 whisperKitSection(state: $state)
+            case .senseVoice:
+                senseVoiceSection(state: $state)
             case .openAIWhisper:
                 openAIWhisperSection(state: $state)
             case .appleSpeech:
@@ -44,6 +54,7 @@ struct STTSettingsView: View {
         .padding()
         .task {
             await modelManager.loadAvailableModels()
+            await senseVoiceModelManager.loadAvailableModels()
         }
     }
 
@@ -73,36 +84,7 @@ struct STTSettingsView: View {
             }
         }
 
-        Section("Model Cache") {
-            HStack {
-                if isPreloading {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Loading model into memory...")
-                        .foregroundStyle(.secondary)
-                } else if isModelCached {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text("Model loaded and cached")
-                        .foregroundStyle(.secondary)
-                } else if let error = preloadError {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.red)
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .lineLimit(2)
-                } else {
-                    Button("Preload Model") {
-                        Task { await preloadModel() }
-                    }
-                    .disabled(!modelManager.isModelDownloaded(appState.whisperModel))
-                    Text("Load model into memory for faster first dictation.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
+        modelCacheSection
 
         Section("Decoding Options") {
             HStack {
@@ -147,15 +129,106 @@ struct STTSettingsView: View {
         }
     }
 
+    // MARK: - SenseVoice Section
+
+    @ViewBuilder
+    private func senseVoiceSection(state: Bindable<AppState>) -> some View {
+        Section("SenseVoice Model") {
+            Picker("Model", selection: state.senseVoiceModel) {
+                ForEach(Defaults.senseVoiceModels) { model in
+                    let downloaded = senseVoiceModelManager.isModelDownloaded(model.id)
+                    Text("\(model.name) (\(model.sizeString))" + (downloaded ? "" : " - Not Downloaded"))
+                        .tag(model.id)
+                }
+            }
+
+            if !senseVoiceModelManager.isModelDownloaded(state.wrappedValue.senseVoiceModel) {
+                Label("Selected model is not downloaded. Please download it in the Models tab.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            } else {
+                if let info = Defaults.senseVoiceModels.first(where: { $0.id == state.wrappedValue.senseVoiceModel }) {
+                    Text(info.description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+
+        modelCacheSection
+
+        Section("SenseVoice Info") {
+            Text("SenseVoice is a high-performance speech recognition model supporting Chinese, English, Japanese, Korean, and Cantonese. Powered by sherpa-onnx.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Model Cache (shared)
+
+    @ViewBuilder
+    private var modelCacheSection: some View {
+        Section("Model Cache") {
+            HStack {
+                if isPreloading {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Loading model into memory...")
+                        .foregroundStyle(.secondary)
+                } else if isModelCached {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("Model loaded and cached")
+                        .foregroundStyle(.secondary)
+                } else if let error = preloadError {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.red)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .lineLimit(2)
+                } else {
+                    Button("Preload Model") {
+                        Task { await preloadModel() }
+                    }
+                    .disabled(!isSelectedModelDownloaded)
+                    Text("Load model into memory for faster first dictation.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private var isSelectedModelDownloaded: Bool {
+        switch appState.sttProviderType {
+        case .whisperKit:
+            return modelManager.isModelDownloaded(appState.whisperModel)
+        case .senseVoice:
+            return senseVoiceModelManager.isModelDownloaded(appState.senseVoiceModel)
+        default:
+            return true
+        }
+    }
+
     // MARK: - Preload
 
     private func preloadModel() async {
         isPreloading = true
         preloadError = nil
         do {
-            let stt = WhisperKitSTT(modelName: appState.whisperModel)
-            try await stt.prepare()
-            appState.cachedWhisperModel = appState.whisperModel
+            switch appState.sttProviderType {
+            case .whisperKit:
+                let stt = WhisperKitSTT(modelName: appState.whisperModel)
+                try await stt.prepare()
+                appState.cachedWhisperModel = appState.whisperModel
+            case .senseVoice:
+                let stt = SenseVoiceSTT(modelName: appState.senseVoiceModel)
+                try await stt.prepare()
+                appState.cachedSenseVoiceModel = appState.senseVoiceModel
+            default:
+                break
+            }
         } catch {
             preloadError = error.localizedDescription
         }

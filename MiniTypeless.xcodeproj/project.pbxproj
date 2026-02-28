@@ -8,16 +8,16 @@
 
 /* Begin PBXBuildFile section */
 		0002866C1785451E55CDEC3E /* OpenAIWhisperSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D5310A6C3B9EA09FB71525E /* OpenAIWhisperSTT.swift */; };
+		013348A6082F072F3869B5C9 /* SenseVoiceSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4FB67EC97E7071F6AEAD97 /* SenseVoiceSTT.swift */; };
 		02F2EB8AE89E695E26E7C1E5 /* LLMProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 215E41D40BDC0C9CE6A9DCD9 /* LLMProvider.swift */; };
 		0BF263BD237883C04AAFCA33 /* WhisperKitSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00502FF969CCEE017E2717E7 /* WhisperKitSTT.swift */; };
-		A1B2C3D4E5F60001AAAAAAAA /* ClaudeCodeLLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002AAAAAAAA /* ClaudeCodeLLM.swift */; };
-		C1D2E3F4A5B60001BBBBBBBB /* CodexLLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D2E3F4A5B60002BBBBBBBB /* CodexLLM.swift */; };
 		15725AEBD57A4E7D040F8F72 /* ClaudeLLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10EB31513400A83911C34E18 /* ClaudeLLM.swift */; };
 		1669D5FD06949D36C940B5C2 /* ModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FACFBEF52DEE484B1A3C2F /* ModelManager.swift */; };
 		1A59E361DB999930125A1278 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 413E10E9871F6C2F30FAE3E0 /* Assets.xcassets */; };
 		1E01E2D2FF913FF74402AF3E /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD9FED1D96F8041010E6CF31 /* SettingsView.swift */; };
 		1F0B8AADAFEAC5D51ADE8E32 /* SwiftAnthropic in Frameworks */ = {isa = PBXBuildFile; productRef = FEB64061BD606297CC46065F /* SwiftAnthropic */; };
 		236DA7144540B2499D03E0EA /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8348B98392FB565180854CC8 /* MenuBarView.swift */; };
+		373FBA7E0BD7BAE498F8E116 /* ClaudeCodeLLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = A46B0DAB4BF7A0701A41A6F1 /* ClaudeCodeLLM.swift */; };
 		380905A4F505E40CE7E17F0D /* STTProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49AC718F3B8FD55F266D09EE /* STTProvider.swift */; };
 		4572EB460987F51CCA98C73F /* OpenAILLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C9CBE91C6D74A2F99CB679 /* OpenAILLM.swift */; };
 		45C4D38632FE1D754D6E2995 /* AudioConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0832468E79CECB0620CFB3 /* AudioConverter.swift */; };
@@ -25,11 +25,17 @@
 		4B80A9DDA0835C861D683A22 /* RecordingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0F85E285240108FA33E3905 /* RecordingOverlay.swift */; };
 		4B847093FF7DF47AF9CC9360 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28FFB52A5F00CC6A2B2488D1 /* AppConstants.swift */; };
 		51F81B7D6BF3FFB70A8CCC34 /* DownloadProgressRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B92DDAA9A488BA66658BF0 /* DownloadProgressRow.swift */; };
+		58998AA21F4183192E2B38B4 /* AudioStreamEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97561045E4FFA6912B87BC74 /* AudioStreamEngine.swift */; };
 		6B2D445B9A537F205AC5C0CD /* MiniTypelessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BDF938F1BF8B3A85B9A6325 /* MiniTypelessApp.swift */; };
+		6F424019EBE57704CDA5F3DD /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89F7647B47C934640CAE076F /* Accelerate.framework */; };
 		71CE598C175D99A1AA82D02D /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B2EF7052C0EFE22393163B /* PermissionManager.swift */; };
+		7371228521538FE6CE47365C /* CodexLLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7477B7A0D57865AB72323B94 /* CodexLLM.swift */; };
 		7A0D441191129C7F3D314593 /* STTSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE4D62058A3CC62FCFEDDC0 /* STTSettingsView.swift */; };
+		80D086AA87618709C6F9F7B3 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3868AAF7E3F11BA0FED1DD1C /* libc++.tbd */; };
 		82B673267E9BC9A5965A9EE3 /* TextInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0F9D2B8C8DFBC872322B95 /* TextInjector.swift */; };
 		88324C90953846F7074F2B69 /* AppleSpeechSTT.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95116AC078C0DC2D4A49FD30 /* AppleSpeechSTT.swift */; };
+		8C33289549728854C1507C5C /* StreamingPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10D8E8395BA9C7D40145F0D /* StreamingPipeline.swift */; };
+		9281E10CA191BEBCFEA49912 /* SenseVoiceModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863FD5973AB8CA19FDEDD5EE /* SenseVoiceModelManager.swift */; };
 		9C41EA73AC67478A950F72C1 /* LLMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C13125404A13BCB8BF7663 /* LLMSettingsView.swift */; };
 		9EE855985C7BF13DEEB7BA90 /* DictationPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD99D17D26E926AFBE73189 /* DictationPipeline.swift */; };
 		9FB5A1E683C9181C10C40ADB /* ModelManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414B3B5385D971E52E62676C /* ModelManagerView.swift */; };
@@ -39,6 +45,8 @@
 		DB4757A26C56E9A77BBF077F /* LocalMLXLLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F352E8FA50328F2EBECC3A /* LocalMLXLLM.swift */; };
 		EA65E7B302449733916899AF /* SwiftOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = EC6D1E8C06F2510F7DCB8787 /* SwiftOpenAI */; };
 		EDAEC6E069213E13515A8FF1 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = D5704BADCDE94566E29BEF03 /* KeyboardShortcuts */; };
+		EE8B8547BB030398C7BB053A /* VADChunker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487E5806D95A204438CC9D6C /* VADChunker.swift */; };
+		F34AA1AF776FB4F7A673BD5A /* SherpaOnnx.swift in Sources */ = {isa = PBXBuildFile; fileRef = 711BBACFB3C913C7B699ECEC /* SherpaOnnx.swift */; };
 		F5C6BE527031B44B77B28049 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 852A863CA5E7020B8F9E12E4 /* GeneralSettingsView.swift */; };
 		F6BAC6AA5FA05E1C8823A4D7 /* APIKeyField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596DAD4535687E54BE4157D4 /* APIKeyField.swift */; };
 		FE397BC9C7F84AE53375A9BC /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67B1BD3356D3015FFB86703 /* AppState.swift */; };
@@ -47,8 +55,6 @@
 /* Begin PBXFileReference section */
 		00502FF969CCEE017E2717E7 /* WhisperKitSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhisperKitSTT.swift; sourceTree = "<group>"; };
 		0E0F9D2B8C8DFBC872322B95 /* TextInjector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInjector.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60002AAAAAAAA /* ClaudeCodeLLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeLLM.swift; sourceTree = "<group>"; };
-		C1D2E3F4A5B60002BBBBBBBB /* CodexLLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexLLM.swift; sourceTree = "<group>"; };
 		10EB31513400A83911C34E18 /* ClaudeLLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeLLM.swift; sourceTree = "<group>"; };
 		1C421FBA72CC259DE1C57E6A /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
 		215E41D40BDC0C9CE6A9DCD9 /* LLMProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProvider.swift; sourceTree = "<group>"; };
@@ -57,18 +63,28 @@
 		28FFB52A5F00CC6A2B2488D1 /* AppConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConstants.swift; sourceTree = "<group>"; };
 		2AD99D17D26E926AFBE73189 /* DictationPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationPipeline.swift; sourceTree = "<group>"; };
 		2BE4D62058A3CC62FCFEDDC0 /* STTSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTSettingsView.swift; sourceTree = "<group>"; };
+		3868AAF7E3F11BA0FED1DD1C /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		413E10E9871F6C2F30FAE3E0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		414B3B5385D971E52E62676C /* ModelManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagerView.swift; sourceTree = "<group>"; };
+		487E5806D95A204438CC9D6C /* VADChunker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VADChunker.swift; sourceTree = "<group>"; };
 		49AC718F3B8FD55F266D09EE /* STTProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = STTProvider.swift; sourceTree = "<group>"; };
+		4A4FB67EC97E7071F6AEAD97 /* SenseVoiceSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenseVoiceSTT.swift; sourceTree = "<group>"; };
 		4D5310A6C3B9EA09FB71525E /* OpenAIWhisperSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIWhisperSTT.swift; sourceTree = "<group>"; };
 		4E263A52C7B12B6217D430B3 /* MiniTypeless.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniTypeless.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		596DAD4535687E54BE4157D4 /* APIKeyField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeyField.swift; sourceTree = "<group>"; };
 		66F352E8FA50328F2EBECC3A /* LocalMLXLLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalMLXLLM.swift; sourceTree = "<group>"; };
+		711BBACFB3C913C7B699ECEC /* SherpaOnnx.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SherpaOnnx.swift; sourceTree = "<group>"; };
 		71C9CBE91C6D74A2F99CB679 /* OpenAILLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAILLM.swift; sourceTree = "<group>"; };
+		7477B7A0D57865AB72323B94 /* CodexLLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexLLM.swift; sourceTree = "<group>"; };
 		7BDF938F1BF8B3A85B9A6325 /* MiniTypelessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniTypelessApp.swift; sourceTree = "<group>"; };
 		8348B98392FB565180854CC8 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		852A863CA5E7020B8F9E12E4 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
+		863FD5973AB8CA19FDEDD5EE /* SenseVoiceModelManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenseVoiceModelManager.swift; sourceTree = "<group>"; };
+		89F7647B47C934640CAE076F /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		95116AC078C0DC2D4A49FD30 /* AppleSpeechSTT.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechSTT.swift; sourceTree = "<group>"; };
+		97561045E4FFA6912B87BC74 /* AudioStreamEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioStreamEngine.swift; sourceTree = "<group>"; };
+		A10D8E8395BA9C7D40145F0D /* StreamingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamingPipeline.swift; sourceTree = "<group>"; };
+		A46B0DAB4BF7A0701A41A6F1 /* ClaudeCodeLLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeLLM.swift; sourceTree = "<group>"; };
 		A67B1BD3356D3015FFB86703 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AB3A193AC9DB71EBC3DCCB79 /* HistorySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistorySettingsView.swift; sourceTree = "<group>"; };
 		B0F85E285240108FA33E3905 /* RecordingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingOverlay.swift; sourceTree = "<group>"; };
@@ -77,6 +93,7 @@
 		BE0832468E79CECB0620CFB3 /* AudioConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioConverter.swift; sourceTree = "<group>"; };
 		C90A60021C951EF9AB364407 /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		D7342176E136EBEB22C4D461 /* MiniTypeless.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MiniTypeless.entitlements; sourceTree = "<group>"; };
+		F023B48637435096D4BFFD0E /* SherpaOnnx-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SherpaOnnx-Bridging-Header.h"; sourceTree = "<group>"; };
 		F4B92DDAA9A488BA66658BF0 /* DownloadProgressRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadProgressRow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -89,6 +106,8 @@
 				4B3666B345CCD1C2A5C36E1F /* WhisperKit in Frameworks */,
 				EA65E7B302449733916899AF /* SwiftOpenAI in Frameworks */,
 				1F0B8AADAFEAC5D51ADE8E32 /* SwiftAnthropic in Frameworks */,
+				80D086AA87618709C6F9F7B3 /* libc++.tbd in Frameworks */,
+				6F424019EBE57704CDA5F3DD /* Accelerate.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +120,7 @@
 				9345A1054792F0C6C88FA947 /* Audio */,
 				6F61A2E14B871EA79B3AD3B8 /* LLM */,
 				5D120C079CC4FD723EC59D1D /* ModelManager */,
+				8A8420CCDB2D7674A1FCEC90 /* SherpaOnnx */,
 				9F3DF5868B5CCE12DC4393A3 /* STT */,
 				584A3F248FB0701F726A09E0 /* TextInjection */,
 				25B2EF7052C0EFE22393163B /* PermissionManager.swift */,
@@ -139,6 +159,14 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		3C27BAC447D802185744265B /* Bridging */ = {
+			isa = PBXGroup;
+			children = (
+				F023B48637435096D4BFFD0E /* SherpaOnnx-Bridging-Header.h */,
+			);
+			path = Bridging;
+			sourceTree = "<group>";
+		};
 		41E2B0BA210B41B4E8A26FCD /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -161,6 +189,7 @@
 			isa = PBXGroup;
 			children = (
 				23FACFBEF52DEE484B1A3C2F /* ModelManager.swift */,
+				863FD5973AB8CA19FDEDD5EE /* SenseVoiceModelManager.swift */,
 			);
 			path = ModelManager;
 			sourceTree = "<group>";
@@ -169,6 +198,7 @@
 			isa = PBXGroup;
 			children = (
 				41E2B0BA210B41B4E8A26FCD /* App */,
+				3C27BAC447D802185744265B /* Bridging */,
 				AA4C33B460BBFA01050380EA /* Hotkey */,
 				F4BA8096C25C18F5A43E21BA /* Pipeline */,
 				2DC091692AC6642FBF894742 /* Resources */,
@@ -181,9 +211,9 @@
 		6F61A2E14B871EA79B3AD3B8 /* LLM */ = {
 			isa = PBXGroup;
 			children = (
-				A1B2C3D4E5F60002AAAAAAAA /* ClaudeCodeLLM.swift */,
+				A46B0DAB4BF7A0701A41A6F1 /* ClaudeCodeLLM.swift */,
 				10EB31513400A83911C34E18 /* ClaudeLLM.swift */,
-				C1D2E3F4A5B60002BBBBBBBB /* CodexLLM.swift */,
+				7477B7A0D57865AB72323B94 /* CodexLLM.swift */,
 				215E41D40BDC0C9CE6A9DCD9 /* LLMProvider.swift */,
 				66F352E8FA50328F2EBECC3A /* LocalMLXLLM.swift */,
 				71C9CBE91C6D74A2F99CB679 /* OpenAILLM.swift */,
@@ -191,10 +221,20 @@
 			path = LLM;
 			sourceTree = "<group>";
 		};
+		6FAE03E254CCB9D450F43AEB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				89F7647B47C934640CAE076F /* Accelerate.framework */,
+				3868AAF7E3F11BA0FED1DD1C /* libc++.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		7AD636AD91901E3FE4079E37 = {
 			isa = PBXGroup;
 			children = (
 				637D0EB0EBA6170F352936A8 /* MiniTypeless */,
+				6FAE03E254CCB9D450F43AEB /* Frameworks */,
 				7D4CAE8D9D8D7D823B71A330 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -207,11 +247,21 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		8A8420CCDB2D7674A1FCEC90 /* SherpaOnnx */ = {
+			isa = PBXGroup;
+			children = (
+				711BBACFB3C913C7B699ECEC /* SherpaOnnx.swift */,
+			);
+			path = SherpaOnnx;
+			sourceTree = "<group>";
+		};
 		9345A1054792F0C6C88FA947 /* Audio */ = {
 			isa = PBXGroup;
 			children = (
 				BE0832468E79CECB0620CFB3 /* AudioConverter.swift */,
 				1C421FBA72CC259DE1C57E6A /* AudioRecorder.swift */,
+				97561045E4FFA6912B87BC74 /* AudioStreamEngine.swift */,
+				487E5806D95A204438CC9D6C /* VADChunker.swift */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -221,6 +271,7 @@
 			children = (
 				95116AC078C0DC2D4A49FD30 /* AppleSpeechSTT.swift */,
 				4D5310A6C3B9EA09FB71525E /* OpenAIWhisperSTT.swift */,
+				4A4FB67EC97E7071F6AEAD97 /* SenseVoiceSTT.swift */,
 				49AC718F3B8FD55F266D09EE /* STTProvider.swift */,
 				00502FF969CCEE017E2717E7 /* WhisperKitSTT.swift */,
 			);
@@ -258,6 +309,7 @@
 			isa = PBXGroup;
 			children = (
 				2AD99D17D26E926AFBE73189 /* DictationPipeline.swift */,
+				A10D8E8395BA9C7D40145F0D /* StreamingPipeline.swift */,
 			);
 			path = Pipeline;
 			sourceTree = "<group>";
@@ -344,9 +396,10 @@
 				88324C90953846F7074F2B69 /* AppleSpeechSTT.swift in Sources */,
 				45C4D38632FE1D754D6E2995 /* AudioConverter.swift in Sources */,
 				D20A5061130B5FE49C59D800 /* AudioRecorder.swift in Sources */,
-				A1B2C3D4E5F60001AAAAAAAA /* ClaudeCodeLLM.swift in Sources */,
+				58998AA21F4183192E2B38B4 /* AudioStreamEngine.swift in Sources */,
+				373FBA7E0BD7BAE498F8E116 /* ClaudeCodeLLM.swift in Sources */,
 				15725AEBD57A4E7D040F8F72 /* ClaudeLLM.swift in Sources */,
-				C1D2E3F4A5B60001BBBBBBBB /* CodexLLM.swift in Sources */,
+				7371228521538FE6CE47365C /* CodexLLM.swift in Sources */,
 				9EE855985C7BF13DEEB7BA90 /* DictationPipeline.swift in Sources */,
 				51F81B7D6BF3FFB70A8CCC34 /* DownloadProgressRow.swift in Sources */,
 				F5C6BE527031B44B77B28049 /* GeneralSettingsView.swift in Sources */,
@@ -365,8 +418,13 @@
 				4B80A9DDA0835C861D683A22 /* RecordingOverlay.swift in Sources */,
 				380905A4F505E40CE7E17F0D /* STTProvider.swift in Sources */,
 				7A0D441191129C7F3D314593 /* STTSettingsView.swift in Sources */,
+				9281E10CA191BEBCFEA49912 /* SenseVoiceModelManager.swift in Sources */,
+				013348A6082F072F3869B5C9 /* SenseVoiceSTT.swift in Sources */,
 				1E01E2D2FF913FF74402AF3E /* SettingsView.swift in Sources */,
+				F34AA1AF776FB4F7A673BD5A /* SherpaOnnx.swift in Sources */,
+				8C33289549728854C1507C5C /* StreamingPipeline.swift in Sources */,
 				82B673267E9BC9A5965A9EE3 /* TextInjector.swift in Sources */,
+				EE8B8547BB030398C7BB053A /* VADChunker.swift in Sources */,
 				0BF263BD237883C04AAFCA33 /* WhisperKitSTT.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -502,6 +560,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/sherpa-onnx-libs/include";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MiniTypeless needs microphone access to record your voice for dictation.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "MiniTypeless uses speech recognition to convert your voice to text.";
@@ -509,10 +568,28 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/sherpa-onnx-libs";
 				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"-lsherpa-onnx-c-api",
+					"-lsherpa-onnx-core",
+					"-lsherpa-onnx-cxx-api",
+					"-lkaldi-native-fbank-core",
+					"-lkissfft-float",
+					"-lsherpa-onnx-fstfar",
+					"-lsherpa-onnx-fst",
+					"-lsherpa-onnx-kaldifst-core",
+					"-lkaldi-decoder-core",
+					"-lucd",
+					"-lpiper_phonemize",
+					"-lespeak-ng",
+					"-lssentencepiece_core",
+					"-lonnxruntime",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.wetabq.MiniTypeless;
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OBJC_BRIDGING_HEADER = "MiniTypeless/Bridging/SherpaOnnx-Bridging-Header.h";
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -526,6 +603,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/sherpa-onnx-libs/include";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "MiniTypeless needs microphone access to record your voice for dictation.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "MiniTypeless uses speech recognition to convert your voice to text.";
@@ -533,9 +611,27 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/sherpa-onnx-libs";
 				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = (
+					"-lsherpa-onnx-c-api",
+					"-lsherpa-onnx-core",
+					"-lsherpa-onnx-cxx-api",
+					"-lkaldi-native-fbank-core",
+					"-lkissfft-float",
+					"-lsherpa-onnx-fstfar",
+					"-lsherpa-onnx-fst",
+					"-lsherpa-onnx-kaldifst-core",
+					"-lkaldi-decoder-core",
+					"-lucd",
+					"-lpiper_phonemize",
+					"-lespeak-ng",
+					"-lssentencepiece_core",
+					"-lonnxruntime",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.wetabq.MiniTypeless;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "MiniTypeless/Bridging/SherpaOnnx-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
 			};

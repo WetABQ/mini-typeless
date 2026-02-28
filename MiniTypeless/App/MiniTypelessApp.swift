@@ -54,8 +54,8 @@ final class AppCoordinator {
         pipeline = p
         hotkeyManager = hk
 
-        // Warm up audio subsystem for instant first recording
-        p.warmUpAudio()
+        // Pre-warm audio + preload STT model for instant first recording
+        p.warmUp()
 
         // Configure recording overlay
         let overlay = RecordingOverlayPanel.shared

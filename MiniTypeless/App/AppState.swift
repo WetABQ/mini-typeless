@@ -97,8 +97,13 @@ final class AppState {
     var audioLevel: Float = 0
     var audioLevelHistory: [Float] = Array(repeating: 0, count: 12)
 
-    // WhisperKit model cache tracking (transient, reflects WhisperKitSTT.cachedKit)
+    // Model cache tracking (transient)
     var cachedWhisperModel: String?
+    var cachedSenseVoiceModel: String?
+
+    // Streaming state (transient)
+    var streamingTranscription: String = ""
+    var streamingChunkCount: Int = 0
 
     // History
     var history: [DictationRecord] = [] {
@@ -133,6 +138,7 @@ final class AppState {
 
         // Models
         if let val = ud.string(forKey: UDKey.whisperModel), !val.isEmpty { self.whisperModel = val }
+        if let val = ud.string(forKey: UDKey.senseVoiceModel), !val.isEmpty { self.senseVoiceModel = val }
         if let val = ud.string(forKey: UDKey.localLLMModel), !val.isEmpty { self.localLLMModel = val }
 
         // Prompt
@@ -284,6 +290,10 @@ final class AppState {
     // Models
     var whisperModel: String = Defaults.whisperModel {
         didSet { UserDefaults.standard.set(whisperModel, forKey: UDKey.whisperModel) }
+    }
+
+    var senseVoiceModel: String = Defaults.senseVoiceModel {
+        didSet { UserDefaults.standard.set(senseVoiceModel, forKey: UDKey.senseVoiceModel) }
     }
 
     var localLLMModel: String = Defaults.localLLMModel {

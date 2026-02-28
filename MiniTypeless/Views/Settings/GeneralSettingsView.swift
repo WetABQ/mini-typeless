@@ -77,7 +77,7 @@ private struct PermissionRow: View {
     let action: () -> Void
 
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             Image(systemName: icon)
                 .frame(width: 20)
             Text(title)
@@ -86,21 +86,29 @@ private struct PermissionRow: View {
 
             switch status {
             case .granted:
-                Label("Granted", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.caption)
+                statusLabel(systemImage: "checkmark.circle.fill", text: "Granted", color: .green)
             case .denied:
-                Button("Open Settings") { action() }
-                    .buttonStyle(.borderless)
-                    .foregroundStyle(.orange)
+                Button(action: action) {
+                    statusLabel(systemImage: "exclamationmark.triangle.fill", text: "Open Settings", color: .orange)
+                }
+                .buttonStyle(.borderless)
             case .notRequested:
-                Button("Grant") { action() }
-                    .buttonStyle(.borderless)
+                Button(action: action) {
+                    statusLabel(systemImage: "circle.dashed", text: "Grant", color: .accentColor)
+                }
+                .buttonStyle(.borderless)
             case .unknown:
-                Text("Unknown")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                statusLabel(systemImage: "questionmark.circle", text: "Unknown", color: .secondary)
             }
         }
+    }
+
+    private func statusLabel(systemImage: String, text: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage)
+            Text(text)
+        }
+        .font(.caption.weight(.medium))
+        .foregroundStyle(color)
     }
 }

@@ -32,6 +32,10 @@ enum UDKey {
     static let llmTemperature = "llmTemperature"
     static let llmMaxTokens = "llmMaxTokens"
 
+    // SenseVoice
+    static let senseVoiceModel = "senseVoiceModel"
+    static let huggingFaceMirror = "huggingFaceMirror"
+
     // CLI LLM providers
     static let claudeCodeCliPath = "claudeCodeCliPath"
     static let claudeCodeModel = "claudeCodeModel"
@@ -104,6 +108,22 @@ enum Defaults {
         "claude-3-5-haiku-20241022",
     ]
 
+    // SenseVoice defaults
+    static let senseVoiceModel = "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17"
+    static let huggingFaceMirror = "https://huggingface.co"
+
+    // SenseVoice model metadata
+    static let senseVoiceModels: [SenseVoiceModelInfo] = [
+        .init(
+            id: "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17",
+            name: "SenseVoice (zh/en/ja/ko/yue)",
+            sizeMB: 230,
+            description: "Multi-lingual: Chinese, English, Japanese, Korean, Cantonese. ~70ms for 10s audio.",
+            huggingFaceRepo: "csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17",
+            requiredFiles: ["model.int8.onnx", "tokens.txt"]
+        ),
+    ]
+
     // Whisper model metadata
     static let whisperModels: [WhisperModelInfo] = [
         .init(id: "openai_whisper-tiny", name: "Tiny", sizeMB: 75, description: "Fastest, lowest accuracy. English only recommended."),
@@ -159,6 +179,28 @@ struct WhisperModelInfo: Identifiable {
     }
 }
 
+// MARK: - SenseVoice Model Info
+
+struct SenseVoiceModelInfo: Identifiable {
+    let id: String
+    let name: String
+    let sizeMB: Int
+    let description: String
+    let huggingFaceRepo: String
+    let requiredFiles: [String]
+
+    var sizeString: String {
+        if sizeMB >= 1000 {
+            return String(format: "~%.1f GB", Double(sizeMB) / 1000)
+        }
+        return "~\(sizeMB) MB"
+    }
+
+    var estimatedTotalBytes: Int64 {
+        Int64(sizeMB) * 1_000_000
+    }
+}
+
 // MARK: - Keyboard Shortcuts
 
 extension KeyboardShortcuts.Name {
@@ -169,10 +211,18 @@ extension KeyboardShortcuts.Name {
 
 enum STTProviderType: String, CaseIterable, Identifiable, Codable {
     case whisperKit = "WhisperKit"
+    case senseVoice = "SenseVoice"
     case appleSpeech = "Apple Speech"
     case openAIWhisper = "OpenAI Whisper"
 
     var id: String { rawValue }
+
+    var isLocal: Bool {
+        switch self {
+        case .whisperKit, .senseVoice: return true
+        case .appleSpeech, .openAIWhisper: return false
+        }
+    }
 }
 
 enum LLMProviderType: String, CaseIterable, Identifiable, Codable {
