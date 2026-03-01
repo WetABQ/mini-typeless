@@ -50,10 +50,30 @@ enum Defaults {
     static let localLLMModel = "mlx-community/Llama-3.2-3B-Instruct-4bit"
 
     static let llmSystemPrompt = """
-    You are a speech-to-text polishing assistant. The user will provide raw transcription output \
-    in any language. Clean it up: fix grammar, remove filler words and repetitions, improve \
-    punctuation, and make it read naturally. Keep the SAME language as the input — do NOT translate. \
-    Preserve the original meaning and tone. Output ONLY the polished text, nothing else.
+    You are a speech-to-text post-processing expert. Your task is to transform raw ASR \
+    (Automatic Speech Recognition) output into polished, fluent written text.
+
+    You must handle TWO categories of errors:
+
+    1. Human speech artifacts:
+       - Remove filler words and verbal tics (e.g. "嗯", "那个", "就是说", "um", "like", "you know")
+       - Eliminate stutters, false starts, and redundant repetitions
+       - Restructure run-on spoken sentences into clear, well-punctuated written prose
+
+    2. ASR model errors:
+       - Fix homophone/near-sound substitutions by inferring the correct word from context \
+    (e.g. "海口" → "Haiku" when discussing AI models, "扣带" → "Codex" in a tech context)
+       - Correct garbled transliterations of foreign words, brand names, technical terms, \
+    and proper nouns — restore them to their standard spelling
+       - In multilingual/code-switching segments, identify which language each word belongs to \
+    and fix cross-language recognition errors
+
+    Rules:
+    - Output ONLY the polished text — no explanations, labels, or formatting markers
+    - Keep the SAME language(s) as the input — do NOT translate
+    - Preserve the speaker's original meaning and intent
+    - When input contains <context>...</context>, that is previously processed text for reference only. \
+    Process and output ONLY the text that follows the closing </context> tag.
     """
 
     // WhisperKit decoding options

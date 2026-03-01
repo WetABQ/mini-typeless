@@ -109,7 +109,24 @@ final class DictationPipeline {
                     preLaunchLLM()
                 }
 
-                try streamingPipeline.startStreaming(sttProvider: stt)
+                let systemPrompt = appState.llmSystemPrompt
+                let llmFactory: (() -> any LLMProvider)? = appState.llmEnabled
+                    ? { [self] in
+                        let provider = self.createLLMProvider()
+                        // Pre-warm CLI providers so they're ready when STT finishes
+                        if let claude = provider as? ClaudeCodeLLM {
+                            claude.warmUp(systemPrompt: systemPrompt)
+                        } else if let codex = provider as? CodexLLM {
+                            codex.warmUp(systemPrompt: systemPrompt)
+                        }
+                        return provider
+                    }
+                    : nil
+                try streamingPipeline.startStreaming(
+                    sttProvider: stt,
+                    llmFactory: llmFactory,
+                    llmSystemPrompt: appState.llmEnabled ? appState.llmSystemPrompt : ""
+                )
             } else {
                 // Batch mode: record first, process later
                 appState.dictationState = .recording
@@ -219,17 +236,20 @@ final class DictationPipeline {
 
     // MARK: - Streaming post-processing
 
-    /// Called after streaming recording stops. Awaits all chunks,
-    /// polishes, and injects.
+    /// Called after streaming recording stops.
+    /// Phase 1: Await STT (fast — usually already done).
+    /// Phase 2: Await LLM polish with timeout (concurrent with recording).
+    /// Phase 3: Inject result.
     private func runStreamingPostProcess() async {
         do {
+            // Phase 1: Finish STT
             appState.dictationState = .transcribing
-            let result = await streamingPipeline.stopStreaming()
+            let result = await streamingPipeline.stopAndFinishSTT()
 
             try Task.checkCancellation()
 
             let rawText = result.text
-            logger.info("Streaming result: \(result.chunkCount) chunks, text='\(rawText.prefix(200))'")
+            logger.info("Streaming STT done: \(result.chunkCount) chunks, text='\(rawText.prefix(200))'")
 
             guard !rawText.isEmpty else {
                 logger.info("Empty streaming transcription")
@@ -241,13 +261,23 @@ final class DictationPipeline {
 
             appState.lastTranscription = rawText
 
-            // LLM polish (optional)
+            // Phase 2: Await LLM polish (with timeout)
             var finalText = rawText
             if appState.llmEnabled {
                 appState.dictationState = .processing
                 try Task.checkCancellation()
-                finalText = try await polishWithLLM(rawText, provider: preLaunchedLLM)
-                preLaunchedLLM = nil
+
+                if let polishedText = await streamingPipeline.awaitPolish(timeout: .seconds(15)) {
+                    // All chunks polished during recording — use directly
+                    logger.info("Using streaming-polished result")
+                    finalText = polishedText
+                    cancelPreLaunchedLLM()
+                } else {
+                    // Incomplete or timed out — fall back to warm process for full text
+                    logger.info("Streaming polish incomplete, falling back to warm process")
+                    finalText = try await polishWithLLM(rawText, provider: preLaunchedLLM)
+                    preLaunchedLLM = nil
+                }
             }
 
             try Task.checkCancellation()
